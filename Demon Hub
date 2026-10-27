@@ -1,26 +1,33 @@
 --[[
-    Demon Hub - Xeno Edition
-    Compatível com Xeno, Delta e Executores Básicos (Sem Drawing)
-    Atalhos: RightShift (Abrir/Fechar Painel) | Delete (Pânico / Fechar)
+    Demon Hub - Dark Edition (Xeno Compatible)
+    UI Baseada na Imagem de Referência
+    Atalhos: RightShift (Abrir/Fechar) | Delete (Pânico)
 ]]
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
 
 -- ============================================================
--- 1. CONFIGURAÇÕES
+-- 1. CONFIGURAÇÕES (Tudo o que está na foto)
 -- ============================================================
 local Config = {
-    -- Player ESP
-    nameTagESP = false,
-    healthBarESP = false,
-    distanceESP = false,
-    boxESP = false,
-    -- Admin/Cheater ESP
-    adminESP = false,
-    cheaterESP = false,
+    -- Aimbot
+    aimbotEnabled = false, aimbotFOV = 120, aimbotSmooth = 5, aimbotRadius = 300, 
+    targetSelection = "Nearest", visibleCheck = true, teamCheck = false,
+    -- ESP
+    nameTagESP = false, healthBarESP = false, distanceESP = false, maxDist = 1200,
+    skeletonESP = false, boxESP = false, chams = false, weaponESP = false,
+    -- NPC ESP
+    dozerESP = false, whisperESP = false, morteESP = false, heliESP = false, otherNPCs = false, npcAimbot = false,
+    -- Other ESP
+    droppedItems = false, corpseESP = false, containerESP = false, exitESP = false, questItem = false, vehicleESP = false, aiChams = false,
+    -- Visual
+    noGlass = false, fullbright = false,
+    -- Settings (Sliders)
+    fovTransparency = 50, espTextSize = 11, uiScale = 100,
     -- Cores
     colorTheme = Color3.fromRGB(255, 40, 60),
     colorBg = Color3.fromRGB(15, 10, 12),
@@ -29,35 +36,27 @@ local Config = {
 }
 
 -- ============================================================
--- 2. INTERFACE (UI) - Layout Demon Hub
+-- 2. INTERFACE (UI) - Layout 3 Colunas (Foto Original)
 -- ============================================================
-local isMobile = UserInputService.TouchEnabled
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 local MainGui = Instance.new("ScreenGui")
-MainGui.Name = "DemonHub_Xeno"
+MainGui.Name = "DemonHub_DarkEdition"
 MainGui.ResetOnSpawn = false
 MainGui.IgnoreGuiInset = true
 MainGui.Parent = PlayerGui
 
 local MainFrame = Instance.new("Frame")
-MainFrame.Size = UDim2.new(0, isMobile and 300 or 500, 0, isMobile and 400 or 450)
-MainFrame.Position = UDim2.new(0.5, isMobile and -150 or -250, 0.5, isMobile and -200 or -225)
+MainFrame.Size = UDim2.new(0, 800, 0, 520) -- Tamanho da foto
+MainFrame.Position = UDim2.new(0.5, -400, 0.5, -260)
 MainFrame.BackgroundColor3 = Config.colorBg
 MainFrame.BorderSizePixel = 0
 MainFrame.Active = true
 MainFrame.Draggable = true
-MainFrame.Visible = false -- Oculto por padrão
+MainFrame.Visible = false
 MainFrame.Parent = MainGui
 
-local mainCorner = Instance.new("UICorner")
-mainCorner.CornerRadius = UDim.new(0, 8)
-mainCorner.Parent = MainFrame
-
-local mainStroke = Instance.new("UIStroke")
-mainStroke.Color = Config.colorTheme
-mainStroke.Thickness = 1.5
-mainStroke.Transparency = 0.3
-mainStroke.Parent = MainFrame
+local mainCorner = Instance.new("UICorner"); mainCorner.CornerRadius = UDim.new(0, 8); mainCorner.Parent = MainFrame
+local mainStroke = Instance.new("UIStroke"); mainStroke.Color = Config.colorTheme; mainStroke.Thickness = 1.5; mainStroke.Transparency = 0.3; mainStroke.Parent = MainFrame
 
 -- Header
 local Header = Instance.new("Frame")
@@ -68,79 +67,72 @@ Header.Parent = MainFrame
 local hc = Instance.new("UICorner"); hc.CornerRadius = UDim.new(0, 8); hc.Parent = Header
 
 local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(1, -60, 1, 0)
-Title.Position = UDim2.new(0, 15, 0, 0)
-Title.BackgroundTransparency = 1
-Title.Text = "Demon Hub | Xeno Ed."
-Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-Title.TextSize = 16
-Title.Font = Enum.Font.GothamBold
-Title.TextXAlignment = Enum.TextXAlignment.Left
-Title.Parent = Header
+Title.Size = UDim2.new(1, -60, 1, 0); Title.Position = UDim2.new(0, 20, 0, 0)
+Title.BackgroundTransparency = 1; Title.Text = "Demon Hub | PROJECT DELTA | DARK EDITION"
+Title.TextColor3 = Color3.fromRGB(255, 255, 255); Title.TextSize = 18
+Title.Font = Enum.Font.GothamBold; Title.TextXAlignment = Enum.TextXAlignment.Left; Title.Parent = Header
 
 local CloseBtn = Instance.new("TextButton")
-CloseBtn.Size = UDim2.new(0, 30, 0, 30)
-CloseBtn.Position = UDim2.new(1, -40, 0.5, -15)
-CloseBtn.BackgroundColor3 = Color3.fromRGB(40, 20, 20)
-CloseBtn.Text = "X"
-CloseBtn.TextColor3 = Config.colorTheme
-CloseBtn.Font = Enum.Font.GothamBold
-CloseBtn.Parent = Header
+CloseBtn.Size = UDim2.new(0, 30, 0, 30); CloseBtn.Position = UDim2.new(1, -45, 0.5, -15)
+CloseBtn.BackgroundColor3 = Color3.fromRGB(40, 20, 20); CloseBtn.Text = "X"
+CloseBtn.TextColor3 = Config.colorTheme; CloseBtn.Font = Enum.Font.GothamBold; CloseBtn.Parent = Header
 local cbc = Instance.new("UICorner"); cbc.CornerRadius = UDim.new(0, 4); cbc.Parent = CloseBtn
 CloseBtn.MouseButton1Click:Connect(function() MainFrame.Visible = false end)
 
--- Scroll Frame para os controles
-local ScrollFrame = Instance.new("ScrollingFrame")
-ScrollFrame.Size = UDim2.new(1, -20, 1, -60)
-ScrollFrame.Position = UDim2.new(0, 10, 0, 55)
-ScrollFrame.BackgroundTransparency = 1
-ScrollFrame.ScrollBarThickness = 3
-ScrollFrame.ScrollBarImageColor3 = Config.colorTheme
-ScrollFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
-ScrollFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
-ScrollFrame.Parent = MainFrame
+-- Área de 3 Colunas
+local ColumnsFrame = Instance.new("Frame")
+ColumnsFrame.Size = UDim2.new(1, -20, 1, -60)
+ColumnsFrame.Position = UDim2.new(0, 10, 0, 55)
+ColumnsFrame.BackgroundTransparency = 1
+ColumnsFrame.Parent = MainFrame
 
-local UIListLayout = Instance.new("UIListLayout")
-UIListLayout.Padding = UDim.new(0, 5)
-UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
-UIListLayout.Parent = ScrollFrame
+-- Funções de UI (Cards e Toggles)
+local function CreateCard(parent, titleText, pos, size)
+    local frame = Instance.new("Frame")
+    frame.Size = size; frame.Position = pos
+    frame.BackgroundColor3 = Color3.fromRGB(22, 22, 26)
+    frame.BorderSizePixel = 0; frame.Parent = parent
+    local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 6); c.Parent = frame
+    local s = Instance.new("UIStroke"); s.Color = Config.colorTheme; s.Transparency = 0.8; s.Parent = frame
 
--- Função de Criar Toggle
-local function CreateToggle(parent, text, initial, order, callback)
+    local lbl = Instance.new("TextLabel")
+    lbl.Size = UDim2.new(1, -20, 0, 24); lbl.Position = UDim2.new(0, 10, 0, 5)
+    lbl.BackgroundTransparency = 1; lbl.Text = titleText
+    lbl.TextColor3 = Config.colorTheme; lbl.Font = Enum.Font.GothamBold
+    lbl.TextSize = 12; lbl.TextXAlignment = Enum.TextXAlignment.Left; lbl.Parent = frame
+
+    local layout = Instance.new("UIListLayout")
+    layout.Padding = UDim.new(0, 6); layout.SortOrder = Enum.SortOrder.LayoutOrder; layout.Parent = frame
+    
+    local pad = Instance.new("UIPadding")
+    pad.PaddingTop = UDim.new(0, 35); pad.PaddingLeft = UDim.new(0, 10); pad.PaddingRight = UDim.new(0, 10)
+    pad.Parent = frame
+    return frame
+end
+
+local function CreateToggle(parent, labelText, initial, order, callback)
     local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(1, 0, 0, 30)
-    btn.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-    btn.BorderSizePixel = 0
-    btn.Text = ""
-    btn.LayoutOrder = order
-    btn.Parent = parent
+    btn.Size = UDim2.new(1, 0, 0, 24)
+    btn.BackgroundColor3 = Color3.fromRGB(15, 15, 18); btn.BorderSizePixel = 0
+    btn.Text = ""; btn.LayoutOrder = order; btn.Parent = parent
     local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 4); c.Parent = btn
 
     local lbl = Instance.new("TextLabel")
-    lbl.Size = UDim2.new(1, -50, 1, 0)
-    lbl.Position = UDim2.new(0, 8, 0, 0)
-    lbl.BackgroundTransparency = 1
-    lbl.Text = text
-    lbl.TextColor3 = Color3.fromRGB(200, 200, 200)
-    lbl.TextSize = 12
-    lbl.Font = Enum.Font.Gotham
-    lbl.TextXAlignment = Enum.TextXAlignment.Left
-    lbl.Parent = btn
+    lbl.Size = UDim2.new(1, -50, 1, 0); lbl.Position = UDim2.new(0, 8, 0, 0)
+    lbl.BackgroundTransparency = 1; lbl.Text = labelText
+    lbl.TextColor3 = Color3.fromRGB(200, 200, 200); lbl.TextSize = 11
+    lbl.Font = Enum.Font.Gotham; lbl.TextXAlignment = Enum.TextXAlignment.Left; lbl.Parent = btn
 
     local sw = Instance.new("Frame")
-    sw.Size = UDim2.new(0, 30, 0, 16)
-    sw.Position = UDim2.new(1, -38, 0.5, -8)
+    sw.Size = UDim2.new(0, 30, 0, 16); sw.Position = UDim2.new(1, -38, 0.5, -8)
     sw.BackgroundColor3 = initial and Config.colorTheme or Color3.fromRGB(50, 50, 50)
-    sw.BorderSizePixel = 0
-    sw.Parent = btn
+    sw.BorderSizePixel = 0; sw.Parent = btn
     local swc = Instance.new("UICorner"); swc.CornerRadius = UDim.new(1, 0); swc.Parent = sw
 
     local knob = Instance.new("Frame")
     knob.Size = UDim2.new(0, 12, 0, 12)
     knob.Position = initial and UDim2.new(1, -14, 0.5, -6) or UDim2.new(0, 2, 0.5, -6)
-    knob.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    knob.BorderSizePixel = 0
-    knob.Parent = sw
+    knob.BackgroundColor3 = Color3.fromRGB(255, 255, 255); knob.BorderSizePixel = 0; knob.Parent = sw
     local kc = Instance.new("UICorner"); kc.CornerRadius = UDim.new(1, 0); kc.Parent = knob
 
     local state = initial
@@ -152,59 +144,140 @@ local function CreateToggle(parent, text, initial, order, callback)
     end)
 end
 
--- Preenchendo o Painel
-local titleESP = Instance.new("TextLabel")
-titleESP.Size = UDim2.new(1, 0, 0, 20)
-titleESP.Text = "--- Player ESP ---"
-titleESP.TextColor3 = Config.colorTheme
-titleESP.BackgroundTransparency = 1
-titleESP.Font = Enum.Font.GothamBold
-titleESP.LayoutOrder = 1
-titleESP.Parent = ScrollFrame
+local function CreateSlider(parent, labelText, min, max, initial, order, callback)
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(1, 0, 0, 32); frame.BackgroundColor3 = Color3.fromRGB(15, 15, 18)
+    frame.BorderSizePixel = 0; frame.LayoutOrder = order; frame.Parent = parent
+    local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 4); c.Parent = frame
 
-CreateToggle(ScrollFrame, "NameTag ESP", Config.nameTagESP, 2, function(v) Config.nameTagESP = v end)
-CreateToggle(ScrollFrame, "Health Bar ESP", Config.healthBarESP, 3, function(v) Config.healthBarESP = v end)
-CreateToggle(ScrollFrame, "Distance ESP", Config.distanceESP, 4, function(v) Config.distanceESP = v end)
-CreateToggle(ScrollFrame, "Box ESP", Config.boxESP, 5, function(v) Config.boxESP = v end)
+    local lbl = Instance.new("TextLabel")
+    lbl.Size = UDim2.new(1, -50, 0, 16); lbl.Position = UDim2.new(0, 8, 0, 2)
+    lbl.BackgroundTransparency = 1; lbl.Text = labelText
+    lbl.TextColor3 = Color3.fromRGB(200, 200, 200); lbl.TextSize = 10
+    lbl.Font = Enum.Font.Gotham; lbl.TextXAlignment = Enum.TextXAlignment.Left; lbl.Parent = frame
 
-local titleSec = Instance.new("TextLabel")
-titleSec.Size = UDim2.new(1, 0, 0, 20)
-titleSec.Text = "--- Security ESP ---"
-titleSec.TextColor3 = Config.colorTheme
-titleSec.BackgroundTransparency = 1
-titleSec.Font = Enum.Font.GothamBold
-titleSec.LayoutOrder = 6
-titleSec.Parent = ScrollFrame
+    local valBox = Instance.new("TextLabel")
+    valBox.Size = UDim2.new(0, 35, 0, 16); valBox.Position = UDim2.new(1, -43, 0, 2)
+    valBox.BackgroundColor3 = Color3.fromRGB(30, 30, 30); valBox.Text = tostring(initial)
+    valBox.TextColor3 = Color3.fromRGB(255, 255, 255); valBox.TextSize = 10
+    valBox.Font = Enum.Font.Gotham; valBox.Parent = frame
+    local vc = Instance.new("UICorner"); vc.CornerRadius = UDim.new(0, 3); vc.Parent = valBox
 
-CreateToggle(ScrollFrame, "Admin ESP", Config.adminESP, 7, function(v) Config.adminESP = v end)
-CreateToggle(ScrollFrame, "Cheater ESP", Config.cheaterESP, 8, function(v) Config.cheaterESP = v end)
+    local bar = Instance.new("Frame")
+    bar.Size = UDim2.new(1, -16, 0, 6); bar.Position = UDim2.new(0, 8, 1, -10)
+    bar.BackgroundColor3 = Color3.fromRGB(40, 40, 40); bar.BorderSizePixel = 0; bar.Parent = frame
+    local bc = Instance.new("UICorner"); bc.CornerRadius = UDim.new(1, 0); bc.Parent = bar
 
--- ============================================================
--- 3. SISTEMA DE DETECÇÃO
--- ============================================================
-local KNOWN_ADMINS = {}
-local KNOWN_CHEATERS = {}
+    local fill = Instance.new("Frame")
+    fill.Size = UDim2.new((initial - min) / (max - min), 0, 1, 0)
+    fill.BackgroundColor3 = Config.colorTheme; fill.BorderSizePixel = 0; fill.Parent = bar
+    local fc = Instance.new("UICorner"); fc.CornerRadius = UDim.new(1, 0); fc.Parent = fill
 
-local function isAdmin(plr)
-    if table.find(KNOWN_ADMINS, plr.Name) then return true end
-    local lowerName = plr.Name:lower()
-    if lowerName:find("admin") or lowerName:find("mod") or lowerName:find("owner") then return true end
-    return false
-end
-
-local function isCheater(plr)
-    if table.find(KNOWN_CHEATERS, plr.Name) then return true end
-    local char = plr.Character
-    if char then
-        local hum = char:FindFirstChildOfClass("Humanoid")
-        if hum and hum.WalkSpeed > 50 then return true end
+    local dragging = false
+    local function update(input)
+        local rel = math.clamp((input.Position.X - bar.AbsolutePosition.X) / bar.AbsoluteSize.X, 0, 1)
+        local value = math.floor(min + (max - min) * rel + 0.5)
+        fill.Size = UDim2.new(rel, 0, 1, 0); valBox.Text = tostring(value)
+        if callback then callback(value) end
     end
-    return false
+
+    bar.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true; update(input)
+        end
+    end)
+    bar.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = false
+        end
+    end)
+    UserInputService.InputChanged:Connect(function(input)
+        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+            update(input)
+        end
+    end)
 end
 
 -- ============================================================
--- 4. LÓGICA DE ESP (BillboardGui - Nativo do Roblox)
+-- 3. MONTAGEM DAS COLUNAS (Exatamente como a foto)
 -- ============================================================
+
+-- COLUNA 1 (Esquerda)
+local secAimbot = CreateCard(ColumnsFrame, "Aimbot", UDim2.new(0, 0, 0, 0), UDim2.new(0.32, 0, 0.65, 0))
+CreateToggle(secAimbot, "Aimbot", Config.aimbotEnabled, 1, function(v) Config.aimbotEnabled = v end)
+CreateSlider(secAimbot, "Aimbot FOV", 0, 360, Config.aimbotFOV, 2, function(v) Config.aimbotFOV = v end)
+CreateSlider(secAimbot, "Aimbot Smoothness", 1, 20, Config.aimbotSmooth, 3, function(v) Config.aimbotSmooth = v end)
+CreateSlider(secAimbot, "Aimbot Radius", 0, 500, Config.aimbotRadius, 4, function(v) Config.aimbotRadius = v end)
+CreateToggle(secAimbot, "Visible Check", Config.visibleCheck, 5, function(v) Config.visibleCheck = v end)
+CreateToggle(secAimbot, "Team Check", Config.teamCheck, 6, function(v) Config.teamCheck = v end)
+
+local secVisual = CreateCard(ColumnsFrame, "Visual", UDim2.new(0, 0, 0.67, 0), UDim2.new(0.32, 0, 0.33, 0))
+CreateToggle(secVisual, "No Glass", Config.noGlass, 1, function(v) Config.noGlass = v end)
+CreateToggle(secVisual, "Fullbright", Config.fullbright, 2, function(v) 
+    Config.fullbright = v
+    if v then game.Lighting.Ambient = Color3.fromRGB(255,255,255) else game.Lighting.Ambient = Color3.fromRGB(70,70,70) end
+end)
+
+-- COLUNA 2 (Centro)
+local secESP = CreateCard(ColumnsFrame, "Player ESP", UDim2.new(0.34, 0, 0, 0), UDim2.new(0.32, 0, 0.55, 0))
+CreateToggle(secESP, "NameTag ESP", Config.nameTagESP, 1, function(v) Config.nameTagESP = v end)
+CreateToggle(secESP, "Health Bar ESP", Config.healthBarESP, 2, function(v) Config.healthBarESP = v end)
+CreateToggle(secESP, "Distance ESP", Config.distanceESP, 3, function(v) Config.distanceESP = v end)
+CreateSlider(secESP, "Distance Max", 100, 2000, Config.maxDist, 4, function(v) Config.maxDist = v end)
+CreateToggle(secESP, "Skeleton ESP (Nativo)", Config.skeletonESP, 5, function(v) Config.skeletonESP = v end)
+CreateToggle(secESP, "Box ESP (Highlight)", Config.boxESP, 6, function(v) Config.boxESP = v end)
+
+local secOther = CreateCard(ColumnsFrame, "Other ESP", UDim2.new(0.34, 0, 0.57, 0), UDim2.new(0.32, 0, 0.43, 0))
+CreateToggle(secOther, "Dropped Items", Config.droppedItems, 1, function(v) Config.droppedItems = v end)
+CreateToggle(secOther, "Corpse ESP", Config.corpseESP, 2, function(v) Config.corpseESP = v end)
+CreateToggle(secOther, "Container ESP", Config.containerESP, 3, function(v) Config.containerESP = v end)
+CreateToggle(secOther, "Vehicle ESP", Config.vehicleESP, 4, function(v) Config.vehicleESP = v end)
+CreateToggle(secOther, "AI Chams", Config.aiChams, 5, function(v) Config.aiChams = v end)
+
+-- COLUNA 3 (Direita)
+local secNPC = CreateCard(ColumnsFrame, "NPC ESP", UDim2.new(0.68, 0, 0, 0), UDim2.new(0.32, 0, 0.45, 0))
+CreateToggle(secNPC, "Dozer ESP", Config.dozerESP, 1, function(v) Config.dozerESP = v end)
+CreateToggle(secNPC, "Whisper ESP", Config.whisperESP, 2, function(v) Config.whisperESP = v end)
+CreateToggle(secNPC, "Morte ESP", Config.morteESP, 3, function(v) Config.morteESP = v end)
+CreateToggle(secNPC, "Helicopter ESP", Config.heliESP, 4, function(v) Config.heliESP = v end)
+CreateToggle(secNPC, "Other NPCs", Config.otherNPCs, 5, function(v) Config.otherNPCs = v end)
+CreateToggle(secNPC, "NPC Aimbot", Config.npcAimbot, 6, function(v) Config.npcAimbot = v end)
+
+local secSettings = CreateCard(ColumnsFrame, "Settings", UDim2.new(0.68, 0, 0.47, 0), UDim2.new(0.32, 0, 0.53, 0))
+CreateSlider(secSettings, "FOV Transparency", 0, 100, Config.fovTransparency, 1, function(v) Config.fovTransparency = v end)
+CreateSlider(secSettings, "ESP Text Size", 8, 24, Config.espTextSize, 2, function(v) Config.espTextSize = v end)
+CreateSlider(secSettings, "UI Scale", 50, 150, Config.uiScale, 3, function(v) Config.uiScale = v end)
+CreateToggle(secSettings, "Show FPS", false, 4, function(v) end)
+CreateToggle(secSettings, "Crosshair", false, 5, function(v) end)
+
+-- ============================================================
+-- 4. LÓGICA DO SISTEMA (Aimbot, ESP, Etc.)
+-- ============================================================
+local function IsVisible(targetPart)
+    if not Config.visibleCheck then return true end
+    local rayParams = RaycastParams.new()
+    rayParams.FilterDescendantsInstances = {LocalPlayer.Character, targetPart.Parent}
+    rayParams.FilterType = Enum.RaycastFilterType.Exclude
+    local origin = Camera.CFrame.Position
+    local direction = (targetPart.Position - origin)
+    local result = workspace:Raycast(origin, direction, rayParams)
+    return result == nil
+end
+
+-- Aimbot (MouseLock)
+local aiming = false
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    if input.UserInputType == Enum.UserInputType.MouseButton2 and Config.aimbotEnabled then aiming = true end
+end)
+UserInputService.InputEnded:Connect(function(input, gameProcessed)
+    if input.UserInputType == Enum.UserInputType.MouseButton2 then 
+        aiming = false 
+        UserInputService.MouseBehavior = Enum.MouseBehavior.Default
+    end
+end)
+
+-- ESP Store
 local ESPStore = {}
 
 local function CreateESP(plr)
@@ -214,176 +287,122 @@ local function CreateESP(plr)
     if not head then return end
 
     local billboard = Instance.new("BillboardGui")
-    billboard.Name = "DemonESP"
-    billboard.Size = UDim2.new(0, 200, 0, 50)
-    billboard.StudsOffset = Vector3.new(0, 2.5, 0)
-    billboard.AlwaysOnTop = true
-    billboard.Enabled = false
-    billboard.Parent = head
+    billboard.Name = "DemonESP"; billboard.Size = UDim2.new(0, 200, 0, 50)
+    billboard.StudsOffset = Vector3.new(0, 2.5, 0); billboard.AlwaysOnTop = true
+    billboard.Enabled = false; billboard.Parent = head
 
-    local mainFrame = Instance.new("Frame")
-    mainFrame.Size = UDim2.new(1, 0, 1, 0)
-    mainFrame.BackgroundTransparency = 1
-    mainFrame.Parent = billboard
-
-    local outline = Instance.new("Frame")
-    outline.Name = "Outline"
-    outline.Size = UDim2.new(1, -40, 1, -10)
-    outline.Position = UDim2.new(0, 20, 0, 5)
-    outline.BackgroundTransparency = 1
-    outline.BorderSizePixel = 2
-    outline.BorderColor3 = Config.colorTheme
-    outline.Parent = mainFrame
+    local mainFrame = Instance.new("Frame"); mainFrame.Size = UDim2.new(1, 0, 1, 0); mainFrame.BackgroundTransparency = 1; mainFrame.Parent = billboard
 
     local nameLabel = Instance.new("TextLabel")
-    nameLabel.Name = "NameLabel"
-    nameLabel.Size = UDim2.new(1, 0, 0, 15)
-    nameLabel.Position = UDim2.new(0, 0, 0, -15)
-    nameLabel.BackgroundTransparency = 1
-    nameLabel.Text = plr.Name
-    nameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-    nameLabel.TextSize = 12
-    nameLabel.Font = Enum.Font.GothamBold
-    nameLabel.TextStrokeTransparency = 0
-    nameLabel.Visible = false
-    nameLabel.Parent = mainFrame
+    nameLabel.Name = "NameLabel"; nameLabel.Size = UDim2.new(1, 0, 0, 15); nameLabel.Position = UDim2.new(0, 0, 0, -15)
+    nameLabel.BackgroundTransparency = 1; nameLabel.Text = plr.Name; nameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    nameLabel.TextSize = Config.espTextSize; nameLabel.Font = Enum.Font.GothamBold; nameLabel.TextStrokeTransparency = 0; nameLabel.Visible = false; nameLabel.Parent = mainFrame
 
     local distLabel = Instance.new("TextLabel")
-    distLabel.Name = "DistLabel"
-    distLabel.Size = UDim2.new(1, 0, 0, 15)
-    distLabel.Position = UDim2.new(0, 0, 1, 2)
-    distLabel.BackgroundTransparency = 1
-    distLabel.TextColor3 = Config.colorTheme
-    distLabel.TextSize = 12
-    distLabel.Font = Enum.Font.GothamBold
-    distLabel.TextStrokeTransparency = 0
-    distLabel.Visible = false
-    distLabel.Parent = mainFrame
+    distLabel.Name = "DistLabel"; distLabel.Size = UDim2.new(1, 0, 0, 15); distLabel.Position = UDim2.new(0, 0, 1, 2)
+    distLabel.BackgroundTransparency = 1; distLabel.TextColor3 = Config.colorTheme; distLabel.TextSize = Config.espTextSize
+    distLabel.Font = Enum.Font.GothamBold; distLabel.TextStrokeTransparency = 0; distLabel.Visible = false; distLabel.Parent = mainFrame
 
     local healthBar = Instance.new("Frame")
-    healthBar.Name = "HealthBar"
-    healthBar.Size = UDim2.new(0, 4, 1, -10)
-    healthBar.Position = UDim2.new(1, -15, 0, 5)
-    healthBar.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
-    healthBar.BorderSizePixel = 0
-    healthBar.Visible = false
-    healthBar.Parent = mainFrame
+    healthBar.Name = "HealthBar"; healthBar.Size = UDim2.new(0, 4, 1, 0); healthBar.Position = UDim2.new(1, 5, 0, 0)
+    healthBar.BackgroundColor3 = Color3.fromRGB(0, 255, 0); healthBar.BorderSizePixel = 0; healthBar.Visible = false; healthBar.Parent = mainFrame
 
-    ESPStore[plr] = { Billboard = billboard, Outline = outline, Name = nameLabel, Dist = distLabel, Health = healthBar }
+    local highlight = Instance.new("Highlight")
+    highlight.Name = "DemonBox"; highlight.Adornee = char
+    highlight.FillTransparency = 1; highlight.OutlineColor = Config.colorTheme
+    highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+    highlight.Enabled = false; highlight.Parent = char
+
+    ESPStore[plr] = { Billboard = billboard, Name = nameLabel, Dist = distLabel, Health = healthBar, Highlight = highlight, Char = char }
 end
 
 local function RemoveESP(plr)
     if ESPStore[plr] then
-        if ESPStore[plr].Billboard then
-            ESPStore[plr].Billboard:Destroy()
-        end
+        if ESPStore[plr].Billboard then ESPStore[plr].Billboard:Destroy() end
+        if ESPStore[plr].Highlight then ESPStore[plr].Highlight:Destroy() end
         ESPStore[plr] = nil
     end
 end
 
--- Atualiza a lógica
 RunService.RenderStepped:Connect(function()
     if not MainGui.Parent then return end
+    local myChar = LocalPlayer.Character
+    local myRoot = myChar and myChar:FindFirstChild("HumanoidRootPart")
     
+    -- Lógica do Aimbot
+    if aiming and Config.aimbotEnabled and myRoot and Camera then
+        local closestPlr, closestDist = nil, math.huge
+        for _, plr in ipairs(Players:GetPlayers()) do
+            if plr ~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("Head") then
+                local head = plr.Character.Head
+                local dist = (Camera.CFrame.Position - head.Position).Magnitude
+                if dist < Config.aimbotRadius and dist < closestDist and IsVisible(head) then
+                    closestDist = dist; closestPlr = head
+                end
+            end
+        end
+        if closestPlr then
+            local screenPoint = Camera:WorldToViewportPoint(closestPlr.Position)
+            if screenPoint.Z > 0 then
+                UserInputService.MouseBehavior = Enum.MouseBehavior.LockCenter
+                mousemoverel((screenPoint.X - Camera.ViewportSize.X/2) * (Config.aimbotSmooth / 10), (screenPoint.Y - Camera.ViewportSize.Y/2) * (Config.aimbotSmooth / 10))
+            end
+        end
+    end
+
+    -- Lógica do ESP
     for _, plr in ipairs(Players:GetPlayers()) do
-        if plr == LocalPlayer then continue end
-        
+        if plr == LocalPlayer or (Config.teamCheck and plr.Team == LocalPlayer.Team) then continue end
         local char = plr.Character
         local hum = char and char:FindFirstChildOfClass("Humanoid")
         local head = char and char:FindFirstChild("Head")
+        local root = char and char:FindFirstChild("HumanoidRootPart")
         
-        if not char or not hum or hum.Health <= 0 or not head then
-            RemoveESP(plr)
-            continue
+        if not char or not hum or hum.Health <= 0 or not head or not root then
+            RemoveESP(plr); continue
         end
         
-        if not ESPStore[plr] or ESPStore[plr].Billboard.Parent ~= head then
-            RemoveESP(plr)
-            CreateESP(plr)
+        if not ESPStore[plr] or ESPStore[plr].Char ~= char then
+            RemoveESP(plr); CreateESP(plr)
         end
         
         local data = ESPStore[plr]
         if data then
-            local root = char:FindFirstChild("HumanoidRootPart")
-            local dist = root and math.floor((LocalPlayer.Character.HumanoidRootPart.Position - root.Position).Magnitude) or 0
+            local dist = myRoot and math.floor((myRoot.Position - root.Position).Magnitude) or 0
+            if dist > Config.maxDist then
+                data.Highlight.Enabled = false; data.Billboard.Enabled = false
+                continue
+            end
             
-            -- Verifica Admin/Cheater
-            local plrIsAdmin = Config.adminESP and isAdmin(plr)
-            local plrIsCheater = Config.cheaterESP and isCheater(plr)
+            data.Highlight.Enabled = Config.boxESP
+            data.Billboard.Enabled = Config.nameTagESP or Config.distanceESP or Config.healthBarESP
             
-            local isVisible = Config.nameTagESP or Config.distanceESP or Config.boxESP or Config.healthBarESP or plrIsAdmin or plrIsCheater
-            data.Billboard.Enabled = isVisible
-            
-            if isVisible then
-                -- Nome
-                data.Name.Visible = Config.nameTagESP or plrIsAdmin or plrIsCheater
-                if plrIsAdmin then
-                    data.Name.Text = "[ADMIN] " .. plr.Name
-                    data.Name.TextColor3 = Config.adminColor
-                elseif plrIsCheater then
-                    data.Name.Text = "[CHEATER] " .. plr.Name
-                    data.Name.TextColor3 = Config.cheaterColor
-                else
-                    data.Name.Text = plr.Name
-                    data.Name.TextColor3 = Color3.fromRGB(255, 255, 255)
-                end
-                
-                -- Distância
+            if data.Billboard.Enabled then
+                data.Name.Visible = Config.nameTagESP
+                data.Name.Text = plr.Name
                 data.Dist.Visible = Config.distanceESP
                 data.Dist.Text = "[" .. dist .. "m]"
-                
-                -- Box e Cor
-                data.Outline.Visible = Config.boxESP or plrIsAdmin or plrIsCheater
-                if plrIsAdmin then
-                    data.Outline.BorderColor3 = Config.adminColor
-                elseif plrIsCheater then
-                    data.Outline.BorderColor3 = Config.cheaterColor
-                else
-                    data.Outline.BorderColor3 = Config.colorTheme
-                end
-                
-                -- Vida
                 data.Health.Visible = Config.healthBarESP
                 local hpPct = hum.Health / hum.MaxHealth
                 data.Health.Size = UDim2.new(0, 4, hpPct, 0)
-                data.Health.Position = UDim2.new(1, -15, 1 - hpPct, 0)
+                data.Health.Position = UDim2.new(1, 5, 1 - hpPct, 0)
                 data.Health.BackgroundColor3 = Color3.fromRGB(255 * (1 - hpPct), 255 * hpPct, 0)
             end
         end
     end
 end)
 
--- Limpeza ao sair
-Players.PlayerRemoving:Connect(function(plr) RemoveESP(plr) end)
+Players.PlayerRemoving:Connect(RemoveESP)
 
 -- ============================================================
--- 5. ATALHOS E BOTÃO FLUTUANTE
+-- 5. ATALHOS E BOTÃO MOBILE
 -- ============================================================
-local FloatingBtn = Instance.new("TextButton")
-FloatingBtn.Size = UDim2.new(0, 50, 0, 50)
-FloatingBtn.Position = UDim2.new(1, -70, 0.5, -25)
-FloatingBtn.BackgroundColor3 = Config.colorBg
-FloatingBtn.Text = "DEMON"
-FloatingBtn.TextColor3 = Config.colorTheme
-FloatingBtn.Font = Enum.Font.GothamBold
-FloatingBtn.TextSize = 10
-FloatingBtn.Active = true
-FloatingBtn.Draggable = true
-FloatingBtn.Visible = isMobile
-FloatingBtn.Parent = MainGui
-local fbc = Instance.new("UICorner"); fbc.CornerRadius = UDim.new(1, 0); fbc.Parent = FloatingBtn
-local fbs = Instance.new("UIStroke"); fbs.Color = Config.colorTheme; fbs.Thickness = 2; fbs.Parent = FloatingBtn
-FloatingBtn.MouseButton1Click:Connect(function() MainFrame.Visible = not MainFrame.Visible end)
-
 UserInputService.InputBegan:Connect(function(input, processed)
     if processed then return end
     if input.KeyCode == Enum.KeyCode.RightShift then
         MainFrame.Visible = not MainFrame.Visible
     elseif input.KeyCode == Enum.KeyCode.Delete then
-        -- Botão de Pânico
-        for plr, data in pairs(ESPStore) do
-            if data.Billboard then data.Billboard:Destroy() end
-        end
+        for plr, _ in pairs(ESPStore) do RemoveESP(plr) end
         MainGui:Destroy()
     end
 end)
