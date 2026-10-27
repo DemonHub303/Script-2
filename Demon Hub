@@ -1,83 +1,32 @@
 --[[
-    System Delta
-    Atalhos: RightShift (Abrir/Fechar) | Delete (Pânico / Autodestruição)
-    Disfarce: Nomes de variáveis e UI genéricos
+    Demon Hub - Xeno Edition
+    Compatível com Xeno, Delta e Executores Básicos (Sem Drawing)
+    Atalhos: RightShift (Abrir/Fechar Painel) | Delete (Pânico / Fechar)
 ]]
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local LocalPlayer = Players.LocalPlayer
-local HttpService = game:GetService("HttpService")
-
--- TENTATIVA DE BLOQUEAR CAPTURA DE TELA (Bypass)
-pcall(function()
-    if setfflag then
-        setfflag("ScreenshotEnabled", "False")
-        setfflag("ScreenshotIgnoreGui", "False")
-    end
-end)
-
-if not Drawing then
-    return warn("[System] Erro de inicialização.")
-end
 
 -- ============================================================
--- 1. CONFIGURAÇÕES (Nomes Discretos)
+-- 1. CONFIGURAÇÕES
 -- ============================================================
-local CONFIG_FILE = "sys_cfg_v1.json"
-local hasFileIO = (typeof(writefile) == "function" and typeof(readfile) == "function")
-
-local State = {
-    -- Aimbot
-    aimEnabled = false, aimFOV = 120, aimSmooth = 5, aimRadius = 300,
-    visCheck = true, teamCheck = false,
-    -- ESP
-    nameTag = false, healthBar = false, distESP = false, maxDist = 1200,
-    skelESP = false, boxESP = false, chams = false, weaponESP = false,
-    -- NPC ESP
-    npcDozer = false, npcWhisper = false, npcMorte = false,
-    npcHeli = false, npcOther = false, npcAim = false,
-    -- Other ESP
-    dropItem = false, corpse = false, container = false,
-    exitESP = false, questItem = false, vehicle = false, aiChams = false,
-    -- Visual
-    noGlass = false, fullbright = false,
-    -- Settings
-    fovTrans = 50, textSize = 11, uiScale = 100, showFPS = false, crosshair = false,
-    -- Cheater/Admin ESP
-    adminESP = false, cheaterESP = false, adminColor = Color3.fromRGB(255, 0, 0),
-    cheaterColor = Color3.fromRGB(255, 165, 0),
-    -- Cores Fixas
+local Config = {
+    -- Player ESP
+    nameTagESP = false,
+    healthBarESP = false,
+    distanceESP = false,
+    boxESP = false,
+    -- Admin/Cheater ESP
+    adminESP = false,
+    cheaterESP = false,
+    -- Cores
     colorTheme = Color3.fromRGB(255, 40, 60),
     colorBg = Color3.fromRGB(15, 10, 12),
+    adminColor = Color3.fromRGB(255, 0, 0),
+    cheaterColor = Color3.fromRGB(255, 165, 0),
 }
-
-local function saveConfig()
-    if not hasFileIO then return end
-    pcall(function()
-        local serial = {}
-        for k, v in pairs(State) do
-            if typeof(v) == "Color3" then serial[k] = { __c = true, r = v.R, g = v.G, b = v.B }
-            else serial[k] = v end
-        end
-        writefile(CONFIG_FILE, HttpService:JSONEncode(serial))
-    end)
-end
-
-local function loadConfig()
-    if not hasFileIO then return end
-    pcall(function()
-        if isfile and isfile(CONFIG_FILE) then
-            local data = HttpService:JSONDecode(readfile(CONFIG_FILE))
-            for k, v in pairs(data) do
-                if type(v) == "table" and v.__c then State[k] = Color3.new(v.r, v.g, v.b)
-                else State[k] = v end
-            end
-        end
-    end)
-end
-loadConfig()
 
 -- ============================================================
 -- 2. INTERFACE (UI) - Layout Demon Hub
@@ -85,41 +34,46 @@ loadConfig()
 local isMobile = UserInputService.TouchEnabled
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 local MainGui = Instance.new("ScreenGui")
-MainGui.Name = "SysInterface_" .. tostring(math.random(1000, 9999))
+MainGui.Name = "DemonHub_Xeno"
 MainGui.ResetOnSpawn = false
 MainGui.IgnoreGuiInset = true
-MainGui.DisplayOrder = 999
 MainGui.Parent = PlayerGui
 
 local MainFrame = Instance.new("Frame")
-MainFrame.Name = "Panel"
-MainFrame.Size = UDim2.new(0, isMobile and 340 or 850, 0, isMobile and 450 or 550)
-MainFrame.Position = UDim2.new(0.5, isMobile and -170 or -425, 0.5, isMobile and -225 or -275)
-MainFrame.BackgroundColor3 = State.colorBg
+MainFrame.Size = UDim2.new(0, isMobile and 300 or 500, 0, isMobile and 400 or 450)
+MainFrame.Position = UDim2.new(0.5, isMobile and -150 or -250, 0.5, isMobile and -200 or -225)
+MainFrame.BackgroundColor3 = Config.colorBg
 MainFrame.BorderSizePixel = 0
 MainFrame.Active = true
 MainFrame.Draggable = true
-MainFrame.Visible = false
+MainFrame.Visible = false -- Oculto por padrão
 MainFrame.Parent = MainGui
 
-local mainCorner = Instance.new("UICorner"); mainCorner.CornerRadius = UDim.new(0, 8); mainCorner.Parent = MainFrame
-local mainStroke = Instance.new("UIStroke"); mainStroke.Color = State.colorTheme; mainStroke.Thickness = 1.5; mainStroke.Transparency = 0.3; mainStroke.Parent = MainFrame
+local mainCorner = Instance.new("UICorner")
+mainCorner.CornerRadius = UDim.new(0, 8)
+mainCorner.Parent = MainFrame
 
+local mainStroke = Instance.new("UIStroke")
+mainStroke.Color = Config.colorTheme
+mainStroke.Thickness = 1.5
+mainStroke.Transparency = 0.3
+mainStroke.Parent = MainFrame
+
+-- Header
 local Header = Instance.new("Frame")
-Header.Size = UDim2.new(1, 0, 0, 60)
+Header.Size = UDim2.new(1, 0, 0, 50)
 Header.BackgroundColor3 = Color3.fromRGB(20, 10, 12)
-Header.BackgroundTransparency = 0.2
 Header.BorderSizePixel = 0
 Header.Parent = MainFrame
 local hc = Instance.new("UICorner"); hc.CornerRadius = UDim.new(0, 8); hc.Parent = Header
 
 local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(1, -100, 1, 0)
-Title.Position = UDim2.new(0, 20, 0, 0)
+Title.Size = UDim2.new(1, -60, 1, 0)
+Title.Position = UDim2.new(0, 15, 0, 0)
 Title.BackgroundTransparency = 1
-Title.Text = "System  |  Delta"
+Title.Text = "Demon Hub | Xeno Ed."
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-Title.TextSize = isMobile and 16 or 22
+Title.TextSize = 16
 Title.Font = Enum.Font.GothamBold
 Title.TextXAlignment = Enum.TextXAlignment.Left
 Title.Parent = Header
@@ -129,227 +83,110 @@ CloseBtn.Size = UDim2.new(0, 30, 0, 30)
 CloseBtn.Position = UDim2.new(1, -40, 0.5, -15)
 CloseBtn.BackgroundColor3 = Color3.fromRGB(40, 20, 20)
 CloseBtn.Text = "X"
-CloseBtn.TextColor3 = State.colorTheme
+CloseBtn.TextColor3 = Config.colorTheme
 CloseBtn.Font = Enum.Font.GothamBold
-CloseBtn.TextSize = 14
 CloseBtn.Parent = Header
 local cbc = Instance.new("UICorner"); cbc.CornerRadius = UDim.new(0, 4); cbc.Parent = CloseBtn
 CloseBtn.MouseButton1Click:Connect(function() MainFrame.Visible = false end)
 
--- Abas
-local TabContainer = Instance.new("Frame")
-TabContainer.Size = UDim2.new(1, -40, 0, 30)
-TabContainer.Position = UDim2.new(0, 20, 0, 60)
-TabContainer.BackgroundTransparency = 1
-TabContainer.Parent = MainFrame
+-- Scroll Frame para os controles
+local ScrollFrame = Instance.new("ScrollingFrame")
+ScrollFrame.Size = UDim2.new(1, -20, 1, -60)
+ScrollFrame.Position = UDim2.new(0, 10, 0, 55)
+ScrollFrame.BackgroundTransparency = 1
+ScrollFrame.ScrollBarThickness = 3
+ScrollFrame.ScrollBarImageColor3 = Config.colorTheme
+ScrollFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+ScrollFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
+ScrollFrame.Parent = MainFrame
 
-local TabLayout = Instance.new("UIListLayout")
-TabLayout.FillDirection = Enum.FillDirection.Horizontal
-TabLayout.Padding = UDim.new(0, 10)
-TabLayout.Parent = TabContainer
+local UIListLayout = Instance.new("UIListLayout")
+UIListLayout.Padding = UDim.new(0, 5)
+UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+UIListLayout.Parent = ScrollFrame
 
-local ContentFrame = Instance.new("Frame")
-ContentFrame.Size = UDim2.new(1, -40, 1, -110)
-ContentFrame.Position = UDim2.new(0, 20, 0, 95)
-ContentFrame.BackgroundTransparency = 1
-ContentFrame.Parent = MainFrame
-
--- Funções Auxiliares de UI
-local function CreateSection(parent, titleText, pos, size)
-    local frame = Instance.new("Frame")
-    frame.Size = size; frame.Position = pos
-    frame.BackgroundColor3 = Color3.fromRGB(12, 12, 12)
-    frame.BorderSizePixel = 0; frame.Parent = parent
-    local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 6); c.Parent = frame
-    local s = Instance.new("UIStroke"); s.Color = State.colorTheme; s.Transparency = 0.7; s.Parent = frame
-
-    local lbl = Instance.new("TextLabel")
-    lbl.Size = UDim2.new(1, -20, 0, 24); lbl.Position = UDim2.new(0, 10, 0, 5)
-    lbl.BackgroundTransparency = 1; lbl.Text = titleText
-    lbl.TextColor3 = State.colorTheme; lbl.Font = Enum.Font.GothamBold
-    lbl.TextSize = 12; lbl.TextXAlignment = Enum.TextXAlignment.Left; lbl.Parent = frame
-
-    local layout = Instance.new("UIListLayout")
-    layout.Padding = UDim.new(0, 6); layout.SortOrder = Enum.SortOrder.LayoutOrder; layout.Parent = frame
-    
-    local pad = Instance.new("UIPadding")
-    pad.PaddingTop = UDim.new(0, 30); pad.PaddingLeft = UDim.new(0, 10); pad.PaddingRight = UDim.new(0, 10)
-    pad.Parent = frame
-    return frame
-end
-
-local function CreateToggle(parent, labelText, initial, order, callback)
+-- Função de Criar Toggle
+local function CreateToggle(parent, text, initial, order, callback)
     local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(1, 0, 0, 26)
-    btn.BackgroundColor3 = Color3.fromRGB(25, 25, 25); btn.BorderSizePixel = 0
-    btn.Text = ""; btn.LayoutOrder = order; btn.Parent = parent
+    btn.Size = UDim2.new(1, 0, 0, 30)
+    btn.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+    btn.BorderSizePixel = 0
+    btn.Text = ""
+    btn.LayoutOrder = order
+    btn.Parent = parent
     local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 4); c.Parent = btn
 
     local lbl = Instance.new("TextLabel")
-    lbl.Size = UDim2.new(1, -50, 1, 0); lbl.Position = UDim2.new(0, 8, 0, 0)
-    lbl.BackgroundTransparency = 1; lbl.Text = labelText
-    lbl.TextColor3 = Color3.fromRGB(200, 200, 200); lbl.TextSize = 11
-    lbl.Font = Enum.Font.Gotham; lbl.TextXAlignment = Enum.TextXAlignment.Left; lbl.Parent = btn
+    lbl.Size = UDim2.new(1, -50, 1, 0)
+    lbl.Position = UDim2.new(0, 8, 0, 0)
+    lbl.BackgroundTransparency = 1
+    lbl.Text = text
+    lbl.TextColor3 = Color3.fromRGB(200, 200, 200)
+    lbl.TextSize = 12
+    lbl.Font = Enum.Font.Gotham
+    lbl.TextXAlignment = Enum.TextXAlignment.Left
+    lbl.Parent = btn
 
     local sw = Instance.new("Frame")
-    sw.Size = UDim2.new(0, 30, 0, 16); sw.Position = UDim2.new(1, -38, 0.5, -8)
-    sw.BackgroundColor3 = initial and State.colorTheme or Color3.fromRGB(50, 50, 50)
-    sw.BorderSizePixel = 0; sw.Parent = btn
+    sw.Size = UDim2.new(0, 30, 0, 16)
+    sw.Position = UDim2.new(1, -38, 0.5, -8)
+    sw.BackgroundColor3 = initial and Config.colorTheme or Color3.fromRGB(50, 50, 50)
+    sw.BorderSizePixel = 0
+    sw.Parent = btn
     local swc = Instance.new("UICorner"); swc.CornerRadius = UDim.new(1, 0); swc.Parent = sw
 
     local knob = Instance.new("Frame")
     knob.Size = UDim2.new(0, 12, 0, 12)
     knob.Position = initial and UDim2.new(1, -14, 0.5, -6) or UDim2.new(0, 2, 0.5, -6)
-    knob.BackgroundColor3 = Color3.fromRGB(255, 255, 255); knob.BorderSizePixel = 0; knob.Parent = sw
+    knob.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    knob.BorderSizePixel = 0
+    knob.Parent = sw
     local kc = Instance.new("UICorner"); kc.CornerRadius = UDim.new(1, 0); kc.Parent = knob
 
     local state = initial
     btn.MouseButton1Click:Connect(function()
         state = not state
-        sw.BackgroundColor3 = state and State.colorTheme or Color3.fromRGB(50, 50, 50)
+        sw.BackgroundColor3 = state and Config.colorTheme or Color3.fromRGB(50, 50, 50)
         knob.Position = state and UDim2.new(1, -14, 0.5, -6) or UDim2.new(0, 2, 0.5, -6)
-        if callback then pcall(callback, state) end
-        saveConfig()
+        if callback then callback(state) end
     end)
 end
 
-local function CreateSlider(parent, labelText, min, max, initial, order, callback)
-    local frame = Instance.new("Frame")
-    frame.Size = UDim2.new(1, 0, 0, 36); frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-    frame.BorderSizePixel = 0; frame.LayoutOrder = order; frame.Parent = parent
-    local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 4); c.Parent = frame
+-- Preenchendo o Painel
+local titleESP = Instance.new("TextLabel")
+titleESP.Size = UDim2.new(1, 0, 0, 20)
+titleESP.Text = "--- Player ESP ---"
+titleESP.TextColor3 = Config.colorTheme
+titleESP.BackgroundTransparency = 1
+titleESP.Font = Enum.Font.GothamBold
+titleESP.LayoutOrder = 1
+titleESP.Parent = ScrollFrame
 
-    local lbl = Instance.new("TextLabel")
-    lbl.Size = UDim2.new(1, -50, 0, 16); lbl.Position = UDim2.new(0, 8, 0, 2)
-    lbl.BackgroundTransparency = 1; lbl.Text = labelText
-    lbl.TextColor3 = Color3.fromRGB(200, 200, 200); lbl.TextSize = 11
-    lbl.Font = Enum.Font.Gotham; lbl.TextXAlignment = Enum.TextXAlignment.Left; lbl.Parent = frame
+CreateToggle(ScrollFrame, "NameTag ESP", Config.nameTagESP, 2, function(v) Config.nameTagESP = v end)
+CreateToggle(ScrollFrame, "Health Bar ESP", Config.healthBarESP, 3, function(v) Config.healthBarESP = v end)
+CreateToggle(ScrollFrame, "Distance ESP", Config.distanceESP, 4, function(v) Config.distanceESP = v end)
+CreateToggle(ScrollFrame, "Box ESP", Config.boxESP, 5, function(v) Config.boxESP = v end)
 
-    local valBox = Instance.new("TextLabel")
-    valBox.Size = UDim2.new(0, 35, 0, 16); valBox.Position = UDim2.new(1, -43, 0, 2)
-    valBox.BackgroundColor3 = Color3.fromRGB(15, 15, 15); valBox.Text = tostring(initial)
-    valBox.TextColor3 = Color3.fromRGB(200, 200, 200); valBox.TextSize = 10
-    valBox.Font = Enum.Font.Gotham; valBox.Parent = frame
-    local vc = Instance.new("UICorner"); vc.CornerRadius = UDim.new(0, 3); vc.Parent = valBox
+local titleSec = Instance.new("TextLabel")
+titleSec.Size = UDim2.new(1, 0, 0, 20)
+titleSec.Text = "--- Security ESP ---"
+titleSec.TextColor3 = Config.colorTheme
+titleSec.BackgroundTransparency = 1
+titleSec.Font = Enum.Font.GothamBold
+titleSec.LayoutOrder = 6
+titleSec.Parent = ScrollFrame
 
-    local bar = Instance.new("Frame")
-    bar.Size = UDim2.new(1, -16, 0, 6); bar.Position = UDim2.new(0, 8, 1, -12)
-    bar.BackgroundColor3 = Color3.fromRGB(40, 40, 40); bar.BorderSizePixel = 0; bar.Parent = frame
-    local bc = Instance.new("UICorner"); bc.CornerRadius = UDim.new(1, 0); bc.Parent = bar
-
-    local fill = Instance.new("Frame")
-    fill.Size = UDim2.new((initial - min) / (max - min), 0, 1, 0)
-    fill.BackgroundColor3 = State.colorTheme; fill.BorderSizePixel = 0; fill.Parent = bar
-    local fc = Instance.new("UICorner"); fc.CornerRadius = UDim.new(1, 0); fc.Parent = fill
-
-    local dragging = false
-    local function update(input)
-        local rel = math.clamp((input.Position.X - bar.AbsolutePosition.X) / bar.AbsoluteSize.X, 0, 1)
-        local value = math.floor(min + (max - min) * rel + 0.5)
-        fill.Size = UDim2.new(rel, 0, 1, 0); valBox.Text = tostring(value)
-        if callback then pcall(callback, value) end
-    end
-
-    bar.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            dragging = true; update(input)
-        end
-    end)
-    bar.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            dragging = false; saveConfig()
-        end
-    end)
-    UserInputService.InputChanged:Connect(function(input)
-        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-            update(input)
-        end
-    end)
-end
-
--- Configuração das Abas
-local tabAimbot = Instance.new("TextButton"); tabAimbot.Size = UDim2.new(0, isMobile and 80 or 120, 1, 0); tabAimbot.Text = "[+] Aimbot"; tabAimbot.Parent = TabContainer
-local tabESP = Instance.new("TextButton"); tabESP.Size = UDim2.new(0, isMobile and 80 or 120, 1, 0); tabESP.Text = "[O] ESP"; tabESP.Parent = TabContainer
-local tabSettings = Instance.new("TextButton"); tabSettings.Size = UDim2.new(0, isMobile and 80 or 120, 1, 0); tabSettings.Text = "[*] Settings"; tabSettings.Parent = TabContainer
-
-for _, btn in ipairs({tabAimbot, tabESP, tabSettings}) do
-    btn.BackgroundColor3 = Color3.fromRGB(20, 20, 20); btn.TextColor3 = Color3.fromRGB(150, 150, 150)
-    btn.Font = Enum.Font.GothamBold; btn.TextSize = 11
-    local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 6); c.Parent = btn
-end
-
-local pageAimbot = Instance.new("Frame"); pageAimbot.Size = UDim2.new(1, 0, 1, 0); pageAimbot.BackgroundTransparency = 1; pageAimbot.Parent = ContentFrame
-local pageESP = Instance.new("Frame"); pageESP.Size = UDim2.new(1, 0, 1, 0); pageESP.BackgroundTransparency = 1; pageESP.Visible = false; pageESP.Parent = ContentFrame
-local pageSettings = Instance.new("Frame"); pageSettings.Size = UDim2.new(1, 0, 1, 0); pageSettings.BackgroundTransparency = 1; pageSettings.Visible = false; pageSettings.Parent = ContentFrame
-
-local function SelectTab(tab, page)
-    pageAimbot.Visible = false; pageESP.Visible = false; pageSettings.Visible = false
-    tabAimbot.BackgroundColor3 = Color3.fromRGB(20, 20, 20); tabAimbot.TextColor3 = Color3.fromRGB(150, 150, 150)
-    tabESP.BackgroundColor3 = Color3.fromRGB(20, 20, 20); tabESP.TextColor3 = Color3.fromRGB(150, 150, 150)
-    tabSettings.BackgroundColor3 = Color3.fromRGB(20, 20, 20); tabSettings.TextColor3 = Color3.fromRGB(150, 150, 150)
-    page.Visible = true; tab.BackgroundColor3 = State.colorTheme; tab.TextColor3 = Color3.fromRGB(255, 255, 255)
-end
-
-tabAimbot.MouseButton1Click:Connect(function() SelectTab(tabAimbot, pageAimbot) end)
-tabESP.MouseButton1Click:Connect(function() SelectTab(tabESP, pageESP) end)
-tabSettings.MouseButton1Click:Connect(function() SelectTab(tabSettings, pageSettings) end)
-SelectTab(tabAimbot, pageAimbot)
+CreateToggle(ScrollFrame, "Admin ESP", Config.adminESP, 7, function(v) Config.adminESP = v end)
+CreateToggle(ScrollFrame, "Cheater ESP", Config.cheaterESP, 8, function(v) Config.cheaterESP = v end)
 
 -- ============================================================
--- 3. CONTEÚDO DAS ABAS
+-- 3. SISTEMA DE DETECÇÃO
 -- ============================================================
-
--- Aba Aimbot
-local aimSec = CreateSection(pageAimbot, "Aimbot", UDim2.new(0, 0, 0, 0), UDim2.new(1, 0, 1, 0))
-CreateToggle(aimSec, "Aimbot", State.aimEnabled, 1, function(v) State.aimEnabled = v end)
-CreateSlider(aimSec, "Aimbot FOV", 0, 360, State.aimFOV, 2, function(v) State.aimFOV = v end)
-CreateSlider(aimSec, "Aimbot Smoothness", 1, 20, State.aimSmooth, 3, function(v) State.aimSmooth = v end)
-CreateSlider(aimSec, "Aimbot Radius", 0, 500, State.aimRadius, 4, function(v) State.aimRadius = v end)
-CreateToggle(aimSec, "Visible Check", State.visCheck, 5, function(v) State.visCheck = v end)
-CreateToggle(aimSec, "Team Check", State.teamCheck, 6, function(v) State.teamCheck = v end)
-
--- Aba ESP (Dividida em 3 colunas para incluir Cheater/Admin)
-local col1 = CreateSection(pageESP, "Player ESP", UDim2.new(0, 0, 0, 0), UDim2.new(0.32, 0, 1, 0))
-CreateToggle(col1, "NameTag ESP", State.nameTag, 1, function(v) State.nameTag = v end)
-CreateToggle(col1, "Health Bar", State.healthBar, 2, function(v) State.healthBar = v end)
-CreateToggle(col1, "Distance ESP", State.distESP, 3, function(v) State.distESP = v end)
-CreateSlider(col1, "Dist Max (Studs)", 100, 2000, State.maxDist, 4, function(v) State.maxDist = v end)
-CreateToggle(col1, "Skeleton ESP", State.skelESP, 5, function(v) State.skelESP = v end)
-CreateToggle(col1, "Box ESP", State.boxESP, 6, function(v) State.boxESP = v end)
-
-local col2 = CreateSection(pageESP, "Security ESP", UDim2.new(0.34, 0, 0, 0), UDim2.new(0.32, 0, 1, 0))
-CreateToggle(col2, "Admin ESP", State.adminESP, 1, function(v) State.adminESP = v end)
-CreateToggle(col2, "Cheater ESP", State.cheaterESP, 2, function(v) State.cheaterESP = v end)
-local adminColorLbl = Instance.new("TextLabel"); adminColorLbl.Size = UDim2.new(1,0,0,20); adminColorLbl.Text = "Admin Color (Red)"; adminColorLbl.TextColor3 = State.adminColor; adminColorLbl.TextSize = 10; adminColorLbl.BackgroundTransparency = 1; adminColorLbl.Parent = col2
-local cheaterColorLbl = Instance.new("TextLabel"); cheaterColorLbl.Size = UDim2.new(1,0,0,20); cheaterColorLbl.Text = "Cheater Color (Orange)"; cheaterColorLbl.TextColor3 = State.cheaterColor; cheaterColorLbl.TextSize = 10; cheaterColorLbl.BackgroundTransparency = 1; cheaterColorLbl.Parent = col2
-
-local col3 = CreateSection(pageESP, "Other ESP", UDim2.new(0.68, 0, 0, 0), UDim2.new(0.32, 0, 1, 0))
-CreateToggle(col3, "Dropped Items", State.dropItem, 1, function(v) State.dropItem = v end)
-CreateToggle(col3, "Corpse", State.corpse, 2, function(v) State.corpse = v end)
-CreateToggle(col3, "Container", State.container, 3, function(v) State.container = v end)
-CreateToggle(col3, "Quest Item", State.questItem, 4, function(v) State.questItem = v end)
-CreateToggle(col3, "Vehicle", State.vehicle, 5, function(v) State.vehicle = v end)
-
--- Aba Settings
-local settingsSec = CreateSection(pageSettings, "Settings", UDim2.new(0, 0, 0, 0), UDim2.new(1, 0, 1, 0))
-CreateSlider(settingsSec, "FOV Transparency", 0, 100, State.fovTrans, 1, function(v) State.fovTrans = v end)
-CreateSlider(settingsSec, "ESP Text Size", 8, 24, State.textSize, 2, function(v) State.textSize = v end)
-CreateSlider(settingsSec, "UI Scale", 50, 150, State.uiScale, 3, function(v) State.uiScale = v end)
-CreateToggle(settingsSec, "Show FPS", State.showFPS, 4, function(v) State.showFPS = v end)
-CreateToggle(settingsSec, "Crosshair", State.crosshair, 5, function(v) State.crosshair = v end)
-
--- ============================================================
--- 4. LÓGICA DE DETECÇÃO (CHEATER / ADMIN)
--- ============================================================
-local KNOWN_ADMINS = {} -- Adicione nomes de admins conhecidos aqui se quiser
-local KNOWN_CHEATERS = {} -- Adicione nomes de cheaters conhecidos aqui se quiser
+local KNOWN_ADMINS = {}
+local KNOWN_CHEATERS = {}
 
 local function isAdmin(plr)
     if table.find(KNOWN_ADMINS, plr.Name) then return true end
-    -- Verifica se o jogador está em um grupo de administração comum no Roblox
-    local success, rank = pcall(function() return plr:GetRankInGroup(1234567) end) -- Substitua pelo ID do grupo do jogo
-    if success and rank >= 200 then return true end
-    -- Verifica tags suspeitas no nome
     local lowerName = plr.Name:lower()
     if lowerName:find("admin") or lowerName:find("mod") or lowerName:find("owner") then return true end
     return false
@@ -357,7 +194,6 @@ end
 
 local function isCheater(plr)
     if table.find(KNOWN_CHEATERS, plr.Name) then return true end
-    -- Checagem heurística básica: velocidade absurda
     local char = plr.Character
     if char then
         local hum = char:FindFirstChildOfClass("Humanoid")
@@ -367,179 +203,187 @@ local function isCheater(plr)
 end
 
 -- ============================================================
--- 5. LÓGICA DE ESP (RENDER)
+-- 4. LÓGICA DE ESP (BillboardGui - Nativo do Roblox)
 -- ============================================================
 local ESPStore = {}
-local renderConnection
 
-local function updateESP()
-    if not workspace.CurrentCamera then return end
-    local cam = workspace.CurrentCamera
-    
-    for _, plr in ipairs(Players:GetPlayers()) do
-        local isLocal = (plr == LocalPlayer)
-        local isTeam = State.teamCheck and plr.Team == LocalPlayer.Team
-        
-        if isLocal or isTeam or not plr.Character then
-            if ESPStore[plr] then
-                for _, d in pairs(ESPStore[plr]) do pcall(function() d:Remove() end) end
-                ESPStore[plr] = nil
-            end
-            continue
-        end
-        
-        local char = plr.Character
-        local hrp = char:FindFirstChild("HumanoidRootPart")
-        local head = char:FindFirstChild("Head")
-        local hum = char:FindFirstChildOfClass("Humanoid")
-        
-        if not hrp or not head or not hum or hum.Health <= 0 then
-            if ESPStore[plr] then
-                for _, d in pairs(ESPStore[plr]) do pcall(function() d:Remove() end) end
-                ESPStore[plr] = nil
-            end
-            continue
-        end
-        
-        local dist = (cam.CFrame.Position - hrp.Position).Magnitude
-        if dist > State.maxDist then
-            if ESPStore[plr] then
-                for _, d in pairs(ESPStore[plr]) do d.Visible = false end
-            end
-            continue
-        end
-        
-        -- Verifica Admin / Cheater
-        local plrIsAdmin = State.adminESP and isAdmin(plr)
-        local plrIsCheater = State.cheaterESP and isCheater(plr)
-        local alertType = plrIsAdmin and "ADMIN" or (plrIsCheater and "CHEATER" or nil)
-        local alertColor = plrIsAdmin and State.adminColor or State.cheaterColor
-        
-        if not ESPStore[plr] then
-            ESPStore[plr] = {
-                box = Drawing.new("Square"),
-                name = Drawing.new("Text"),
-                healthBar = Drawing.new("Line"),
-                distText = Drawing.new("Text"),
-                alertText = Drawing.new("Text"),
-                skeleton = {}
-            }
-            ESPStore[plr].box.Thickness = 1
-            ESPStore[plr].box.Color = State.colorTheme
-            ESPStore[plr].name.Size = State.textSize
-            ESPStore[plr].name.Center = true
-            ESPStore[plr].name.Color = Color3.fromRGB(255, 255, 255)
-            ESPStore[plr].healthBar.Thickness = 2
-            ESPStore[plr].healthBar.Color = Color3.fromRGB(0, 255, 0)
-            ESPStore[plr].distText.Size = State.textSize
-            ESPStore[plr].distText.Center = true
-            ESPStore[plr].distText.Color = State.colorTheme
-            ESPStore[plr].alertText.Size = State.textSize + 2
-            ESPStore[plr].alertText.Center = true
-        end
-        
-        local e = ESPStore[plr]
-        local headPos, headOn = cam:WorldToViewportPoint(head.Position + Vector3.new(0, 0.5, 0))
-        local rootPos, rootOn = cam:WorldToViewportPoint(hrp.Position - Vector3.new(0, 1.5, 0))
-        
-        if headOn and rootOn then
-            local h = math.abs(rootPos.Y - headPos.Y)
-            local w = h * 0.55
-            local x = headPos.X - w / 2
-            local y = headPos.Y
-            
-            -- Box (Muda de cor se for Admin/Cheater)
-            e.box.Visible = State.boxESP or plrIsAdmin or plrIsCheater
-            if e.box.Visible then
-                e.box.Size = Vector2.new(w, h)
-                e.box.Position = Vector2.new(x, y)
-                if plrIsAdmin then e.box.Color = State.adminColor
-                elseif plrIsCheater then e.box.Color = State.cheaterColor
-                else e.box.Color = State.colorTheme end
-                e.box.Thickness = (plrIsAdmin or plrIsCheater) and 2 or 1
-            end
-            
-            -- Alerta Admin/Cheater
-            e.alertText.Visible = alertType ~= nil
-            if e.alertText.Visible then
-                e.alertText.Text = "[" .. alertType .. "]"
-                e.alertText.Position = Vector2.new(x + w / 2, y - State.textSize - 20)
-                e.alertText.Color = alertColor
-            end
+local function CreateESP(plr)
+    local char = plr.Character
+    if not char then return end
+    local head = char:FindFirstChild("Head")
+    if not head then return end
 
-            -- Name
-            e.name.Visible = State.nameTag and not alertType
-            if e.name.Visible then
-                e.name.Text = plr.Name
-                e.name.Position = Vector2.new(x + w / 2, y - State.textSize - 5)
-            end
-            
-            -- Health
-            e.healthBar.Visible = State.healthBar
-            if State.healthBar then
-                local hpPct = math.clamp(hum.Health / hum.MaxHealth, 0, 1)
-                e.healthBar.From = Vector2.new(x + w + 4, y + h - h * hpPct)
-                e.healthBar.To = Vector2.new(x + w + 4, y + h)
-            end
-            
-            -- Distance
-            e.distText.Visible = State.distESP
-            if State.distESP then
-                e.distText.Text = string.format("[%dm]", math.floor(dist))
-                e.distText.Position = Vector2.new(x + w / 2, y + h + 5)
-            end
-            
-            -- Skeleton
-            if State.skelESP then
-                local bones = {"Head", "UpperTorso", "LowerTorso", "LeftUpperArm", "LeftLowerArm", "RightUpperArm", "RightLowerArm", "LeftUpperLeg", "LeftLowerLeg", "RightUpperLeg", "RightLowerLeg"}
-                local pts = {}
-                for _, bName in ipairs(bones) do
-                    local b = char:FindFirstChild(bName)
-                    if b then
-                        local sp, on = cam:WorldToViewportPoint(b.Position)
-                        if on then pts[bName] = sp end
-                    end
-                end
-                local conns = {
-                    {"Head","UpperTorso"},{"UpperTorso","LowerTorso"},
-                    {"UpperTorso","LeftUpperArm"},{"LeftUpperArm","LeftLowerArm"},
-                    {"UpperTorso","RightUpperArm"},{"RightUpperArm","RightLowerArm"},
-                    {"LowerTorso","LeftUpperLeg"},{"LeftUpperLeg","LeftLowerLeg"},
-                    {"LowerTorso","RightUpperLeg"},{"RightUpperLeg","RightLowerLeg"}
-                }
-                local idx = 1
-                for _, c in ipairs(conns) do
-                    if pts[c[1]] and pts[c[2]] then
-                        if not e.skeleton[idx] then
-                            e.skeleton[idx] = Drawing.new("Line")
-                            e.skeleton[idx].Color = (plrIsAdmin and State.adminColor) or (plrIsCheater and State.cheaterColor) or State.colorTheme
-                            e.skeleton[idx].Thickness = 1
-                        end
-                        e.skeleton[idx].Visible = true
-                        e.skeleton[idx].From = pts[c[1]]
-                        e.skeleton[idx].To = pts[c[2]]
-                        idx = idx + 1
-                    end
-                end
-                for i = idx, #e.skeleton do e.skeleton[i].Visible = false end
-            else
-                for _, line in pairs(e.skeleton) do line.Visible = false end
-            end
-        else
-            e.box.Visible = false; e.name.Visible = false; e.healthBar.Visible = false
-            e.distText.Visible = false; e.alertText.Visible = false
-            for _, line in pairs(e.skeleton) do line.Visible = false end
+    local billboard = Instance.new("BillboardGui")
+    billboard.Name = "DemonESP"
+    billboard.Size = UDim2.new(0, 200, 0, 50)
+    billboard.StudsOffset = Vector3.new(0, 2.5, 0)
+    billboard.AlwaysOnTop = true
+    billboard.Enabled = false
+    billboard.Parent = head
+
+    local mainFrame = Instance.new("Frame")
+    mainFrame.Size = UDim2.new(1, 0, 1, 0)
+    mainFrame.BackgroundTransparency = 1
+    mainFrame.Parent = billboard
+
+    local outline = Instance.new("Frame")
+    outline.Name = "Outline"
+    outline.Size = UDim2.new(1, -40, 1, -10)
+    outline.Position = UDim2.new(0, 20, 0, 5)
+    outline.BackgroundTransparency = 1
+    outline.BorderSizePixel = 2
+    outline.BorderColor3 = Config.colorTheme
+    outline.Parent = mainFrame
+
+    local nameLabel = Instance.new("TextLabel")
+    nameLabel.Name = "NameLabel"
+    nameLabel.Size = UDim2.new(1, 0, 0, 15)
+    nameLabel.Position = UDim2.new(0, 0, 0, -15)
+    nameLabel.BackgroundTransparency = 1
+    nameLabel.Text = plr.Name
+    nameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    nameLabel.TextSize = 12
+    nameLabel.Font = Enum.Font.GothamBold
+    nameLabel.TextStrokeTransparency = 0
+    nameLabel.Visible = false
+    nameLabel.Parent = mainFrame
+
+    local distLabel = Instance.new("TextLabel")
+    distLabel.Name = "DistLabel"
+    distLabel.Size = UDim2.new(1, 0, 0, 15)
+    distLabel.Position = UDim2.new(0, 0, 1, 2)
+    distLabel.BackgroundTransparency = 1
+    distLabel.TextColor3 = Config.colorTheme
+    distLabel.TextSize = 12
+    distLabel.Font = Enum.Font.GothamBold
+    distLabel.TextStrokeTransparency = 0
+    distLabel.Visible = false
+    distLabel.Parent = mainFrame
+
+    local healthBar = Instance.new("Frame")
+    healthBar.Name = "HealthBar"
+    healthBar.Size = UDim2.new(0, 4, 1, -10)
+    healthBar.Position = UDim2.new(1, -15, 0, 5)
+    healthBar.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+    healthBar.BorderSizePixel = 0
+    healthBar.Visible = false
+    healthBar.Parent = mainFrame
+
+    ESPStore[plr] = { Billboard = billboard, Outline = outline, Name = nameLabel, Dist = distLabel, Health = healthBar }
+end
+
+local function RemoveESP(plr)
+    if ESPStore[plr] then
+        if ESPStore[plr].Billboard then
+            ESPStore[plr].Billboard:Destroy()
         end
+        ESPStore[plr] = nil
     end
 end
 
-renderConnection = RunService.RenderStepped:Connect(function()
-    pcall(updateESP)
+-- Atualiza a lógica
+RunService.RenderStepped:Connect(function()
+    if not MainGui.Parent then return end
+    
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if plr == LocalPlayer then continue end
+        
+        local char = plr.Character
+        local hum = char and char:FindFirstChildOfClass("Humanoid")
+        local head = char and char:FindFirstChild("Head")
+        
+        if not char or not hum or hum.Health <= 0 or not head then
+            RemoveESP(plr)
+            continue
+        end
+        
+        if not ESPStore[plr] or ESPStore[plr].Billboard.Parent ~= head then
+            RemoveESP(plr)
+            CreateESP(plr)
+        end
+        
+        local data = ESPStore[plr]
+        if data then
+            local root = char:FindFirstChild("HumanoidRootPart")
+            local dist = root and math.floor((LocalPlayer.Character.HumanoidRootPart.Position - root.Position).Magnitude) or 0
+            
+            -- Verifica Admin/Cheater
+            local plrIsAdmin = Config.adminESP and isAdmin(plr)
+            local plrIsCheater = Config.cheaterESP and isCheater(plr)
+            
+            local isVisible = Config.nameTagESP or Config.distanceESP or Config.boxESP or Config.healthBarESP or plrIsAdmin or plrIsCheater
+            data.Billboard.Enabled = isVisible
+            
+            if isVisible then
+                -- Nome
+                data.Name.Visible = Config.nameTagESP or plrIsAdmin or plrIsCheater
+                if plrIsAdmin then
+                    data.Name.Text = "[ADMIN] " .. plr.Name
+                    data.Name.TextColor3 = Config.adminColor
+                elseif plrIsCheater then
+                    data.Name.Text = "[CHEATER] " .. plr.Name
+                    data.Name.TextColor3 = Config.cheaterColor
+                else
+                    data.Name.Text = plr.Name
+                    data.Name.TextColor3 = Color3.fromRGB(255, 255, 255)
+                end
+                
+                -- Distância
+                data.Dist.Visible = Config.distanceESP
+                data.Dist.Text = "[" .. dist .. "m]"
+                
+                -- Box e Cor
+                data.Outline.Visible = Config.boxESP or plrIsAdmin or plrIsCheater
+                if plrIsAdmin then
+                    data.Outline.BorderColor3 = Config.adminColor
+                elseif plrIsCheater then
+                    data.Outline.BorderColor3 = Config.cheaterColor
+                else
+                    data.Outline.BorderColor3 = Config.colorTheme
+                end
+                
+                -- Vida
+                data.Health.Visible = Config.healthBarESP
+                local hpPct = hum.Health / hum.MaxHealth
+                data.Health.Size = UDim2.new(0, 4, hpPct, 0)
+                data.Health.Position = UDim2.new(1, -15, 1 - hpPct, 0)
+                data.Health.BackgroundColor3 = Color3.fromRGB(255 * (1 - hpPct), 255 * hpPct, 0)
+            end
+        end
+    end
 end)
 
+-- Limpeza ao sair
+Players.PlayerRemoving:Connect(function(plr) RemoveESP(plr) end)
+
 -- ============================================================
--- 6. ATALHOS, BOTÃO MOBILE E PÂNICO (AUTODESTRUIÇÃO)
+-- 5. ATALHOS E BOTÃO FLUTUANTE
 -- ============================================================
 local FloatingBtn = Instance.new("TextButton")
 FloatingBtn.Size = UDim2.new(0, 50, 0, 50)
-F
+FloatingBtn.Position = UDim2.new(1, -70, 0.5, -25)
+FloatingBtn.BackgroundColor3 = Config.colorBg
+FloatingBtn.Text = "DEMON"
+FloatingBtn.TextColor3 = Config.colorTheme
+FloatingBtn.Font = Enum.Font.GothamBold
+FloatingBtn.TextSize = 10
+FloatingBtn.Active = true
+FloatingBtn.Draggable = true
+FloatingBtn.Visible = isMobile
+FloatingBtn.Parent = MainGui
+local fbc = Instance.new("UICorner"); fbc.CornerRadius = UDim.new(1, 0); fbc.Parent = FloatingBtn
+local fbs = Instance.new("UIStroke"); fbs.Color = Config.colorTheme; fbs.Thickness = 2; fbs.Parent = FloatingBtn
+FloatingBtn.MouseButton1Click:Connect(function() MainFrame.Visible = not MainFrame.Visible end)
+
+UserInputService.InputBegan:Connect(function(input, processed)
+    if processed then return end
+    if input.KeyCode == Enum.KeyCode.RightShift then
+        MainFrame.Visible = not MainFrame.Visible
+    elseif input.KeyCode == Enum.KeyCode.Delete then
+        -- Botão de Pânico
+        for plr, data in pairs(ESPStore) do
+            if data.Billboard then data.Billboard:Destroy() end
+        end
+        MainGui:Destroy()
+    end
+end)
