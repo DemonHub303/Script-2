@@ -1,7 +1,6 @@
 --[[
-    Demon Hub - Dark Edition (UI por cima do Lirp)
-    Motor: Lirp (invisível)
-    Atalhos: RightShift (Abrir/Fechar Painel)
+    Demon Hub - Wrapper Edition
+    Controla o Lirp escondido.
 ]]
 
 local Players = game:GetService("Players")
@@ -9,42 +8,56 @@ local UserInputService = game:GetService("UserInputService")
 local LocalPlayer = Players.LocalPlayer
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 
--- 1. CARREGA O MOTOR DO LIRP (INVISÍVEL)
+-- 1. CARREGA O LIRP
 pcall(function()
     loadstring(game:HttpGet("https://lirp.mrbrainas.workers.dev/Loader", true))()
 end)
-task.wait(3) -- Espera o Lirp carregar
 
--- 2. LIMPA O MENU DO LIRP E DEIXA SÓ O MOTOR
+print("Aguardando o Lirp carregar...")
+task.wait(5) -- Espera 5 segundos para o Lirp abrir o menu dele
+
+-- 2. ESCONDE O MENU DO LIRP (Oculta sem deletar para as funções continuarem rodando)
+local lirpMenu
 for _, gui in pairs(PlayerGui:GetChildren()) do
-    if gui:IsA("ScreenGui") or gui:IsA("GuiMain") then
-        if gui.Name ~= "DemonHub_Final" then
-            pcall(function() gui:Destroy() end)
+    if gui:IsA("ScreenGui") and gui.Name ~= "DemonHub" then
+        -- Procura a janela principal do Lirp (que geralmente tem o nome Lirp ou tem uma moldura grande)
+        if gui.Name:lower():find("lirp") or gui.Name:lower():find("main") then
+            gui.Enabled = false
+            lirpMenu = gui
         end
     end
 end
 
--- 3. CRIA A INTERFACE DEMON HUB (IGUAL À FOTO)
+-- Se não achou pelo nome, tenta esconder a primeira GUI que não é do Roblox
+if not lirpMenu then
+    for _, gui in pairs(PlayerGui:GetChildren()) do
+        if gui:IsA("ScreenGui") and gui.Name ~= "DemonHub" and not gui.Name:lower():find("core") and not gui.Name:lower():find("chat") then
+            gui.Enabled = false
+            lirpMenu = gui
+            break
+        end
+    end
+end
+
+-- 3. CRIA O DEMON HUB (Interface Limpa)
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "DemonHub_Final"
+ScreenGui.Name = "DemonHub"
 ScreenGui.ResetOnSpawn = false
-ScreenGui.DisplayOrder = 999
+ScreenGui.DisplayOrder = 9999
 ScreenGui.Parent = PlayerGui
 
 local MainFrame = Instance.new("Frame")
-MainFrame.Size = UDim2.new(0, 700, 0, 450)
-MainFrame.Position = UDim2.new(0.5, -350, 0.5, -225)
+MainFrame.Size = UDim2.new(0, 500, 0, 350)
+MainFrame.Position = UDim2.new(0.5, -250, 0.5, -175)
 MainFrame.BackgroundColor3 = Color3.fromRGB(12, 10, 12)
 MainFrame.BorderSizePixel = 0
 MainFrame.Active = true
 MainFrame.Draggable = true
-MainFrame.Visible = false
 MainFrame.Parent = ScreenGui
 
 local mainCorner = Instance.new("UICorner"); mainCorner.CornerRadius = UDim.new(0, 8); mainCorner.Parent = MainFrame
 local mainStroke = Instance.new("UIStroke"); mainStroke.Color = Color3.fromRGB(255, 30, 50); mainStroke.Thickness = 1.5; mainStroke.Parent = MainFrame
 
--- Cabeçalho
 local Header = Instance.new("Frame")
 Header.Size = UDim2.new(1, 0, 0, 50)
 Header.BackgroundColor3 = Color3.fromRGB(20, 10, 12)
@@ -64,157 +77,32 @@ CloseBtn.TextColor3 = Color3.fromRGB(255, 30, 50); CloseBtn.Font = Enum.Font.Got
 local cbc = Instance.new("UICorner"); cbc.CornerRadius = UDim.new(0, 4); cbc.Parent = CloseBtn
 CloseBtn.MouseButton1Click:Connect(function() MainFrame.Visible = false end)
 
--- Sistema de Abas
-local TabBar = Instance.new("Frame")
-TabBar.Size = UDim2.new(1, -20, 0, 35); TabBar.Position = UDim2.new(0, 10, 0, 55)
-TabBar.BackgroundColor3 = Color3.fromRGB(20, 20, 22); TabBar.Parent = MainFrame
-local tbc = Instance.new("UICorner"); tbc.CornerRadius = UDim.new(0, 6); tbc.Parent = TabBar
-local tbl = Instance.new("UIListLayout"); tbl.FillDirection = Enum.FillDirection.Horizontal; tbl.Parent = TabBar
+-- Conteúdo
+local Content = Instance.new("Frame")
+Content.Size = UDim2.new(1, -20, 1, -70); Content.Position = UDim2.new(0, 10, 0, 60)
+Content.BackgroundTransparency = 1; Content.Parent = MainFrame
+local layout = Instance.new("UIListLayout"); layout.Padding = UDim.new(0, 10); layout.Parent = Content
 
-local ContentArea = Instance.new("Frame")
-ContentArea.Size = UDim2.new(1, -20, 1, -100); ContentArea.Position = UDim2.new(0, 10, 0, 95)
-ContentArea.BackgroundTransparency = 1; ContentArea.Parent = MainFrame
+local info = Instance.new("TextLabel")
+info.Size = UDim2.new(1, 0, 0, 40); info.BackgroundColor3 = Color3.fromRGB(20, 20, 22)
+info.Text = "O Lirp está rodando em segundo plano!\nUse os botões abaixo para controlar as funções."
+info.TextColor3 = Color3.fromRGB(200, 200, 200); info.TextWrapped = true; info.Font = Enum.Font.Gotham; info.TextSize = 12; info.Parent = Content
+local ic = Instance.new("UICorner"); ic.CornerRadius = UDim.new(0, 4); ic.Parent = info
 
--- Páginas
-local PageAimbot = Instance.new("ScrollingFrame")
-PageAimbot.Size = UDim2.new(1, 0, 1, 0); PageAimbot.BackgroundTransparency = 1
-PageAimbot.ScrollBarThickness = 0; PageAimbot.Parent = ContentArea
-local al = Instance.new("UIListLayout"); al.Padding = UDim.new(0, 8); al.Parent = PageAimbot
+-- Botão para abrir o menu escondido do Lirp (caso precise configurar)
+local btnShowLirp = Instance.new("TextButton")
+btnShowLirp.Size = UDim2.new(1, 0, 0, 40); btnShowLirp.BackgroundColor3 = Color3.fromRGB(255, 30, 50)
+btnShowLirp.Text = "Abrir Menu de Configurações (Lirp)"; btnShowLirp.TextColor3 = Color3.fromRGB(255, 255, 255)
+btnShowLirp.Font = Enum.Font.GothamBold; btnShowLirp.Parent = Content
+local bslc = Instance.new("UICorner"); bslc.CornerRadius = UDim.new(0, 4); bslc.Parent = btnShowLirp
 
-local PageESP = Instance.new("ScrollingFrame")
-PageESP.Size = UDim2.new(1, 0, 1, 0); PageESP.BackgroundTransparency = 1
-PageESP.ScrollBarThickness = 0; PageESP.Visible = false; PageESP.Parent = ContentArea
-local el = Instance.new("UIListLayout"); el.Padding = UDim.new(0, 8); el.Parent = PageESP
+btnShowLirp.MouseButton1Click:Connect(function()
+    if lirpMenu then
+        lirpMenu.Enabled = not lirpMenu.Enabled
+    end
+end)
 
-local PageSettings = Instance.new("ScrollingFrame")
-PageSettings.Size = UDim2.new(1, 0, 1, 0); PageSettings.BackgroundTransparency = 1
-PageSettings.ScrollBarThickness = 0; PageSettings.Visible = false; PageSettings.Parent = ContentArea
-local sl = Instance.new("UIListLayout"); sl.Padding = UDim.new(0, 8); sl.Parent = PageSettings
-
--- Botões de Aba
-local function CreateTabButton(text, icon, page)
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0.33, -2, 1, 0); btn.BackgroundColor3 = Color3.fromRGB(20, 20, 22)
-    btn.Text = icon .. "  " .. text; btn.TextColor3 = Color3.fromRGB(150, 150, 150)
-    btn.Font = Enum.Font.GothamBold; btn.TextSize = 12; btn.Parent = TabBar
-    local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 4); c.Parent = btn
-    
-    btn.MouseButton1Click:Connect(function()
-        PageAimbot.Visible = false; PageESP.Visible = false; PageSettings.Visible = false
-        for _, b in ipairs(TabBar:GetChildren()) do
-            if b:IsA("TextButton") then b.BackgroundColor3 = Color3.fromRGB(20, 20, 22); b.TextColor3 = Color3.fromRGB(150, 150, 150) end
-        end
-        page.Visible = true; btn.BackgroundColor3 = Color3.fromRGB(255, 30, 50); btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    end)
-    return btn
-end
-
-local TabAimbot = CreateTabButton("Aimbot", "[+]", PageAimbot)
-local TabESP = CreateTabButton("ESP", "[O]", PageESP)
-local TabSettings = CreateTabButton("Settings", "[*]", PageSettings)
-
--- Função para criar as seções (Cards)
-local function CreateSection(parent, titleText, layoutOrder)
-    local frame = Instance.new("Frame")
-    frame.Size = UDim2.new(1, 0, 0, 200); frame.BackgroundColor3 = Color3.fromRGB(20, 20, 22)
-    frame.LayoutOrder = layoutOrder; frame.Parent = parent
-    local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 6); c.Parent = frame
-    local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(255, 30, 50); s.Transparency = 0.7; s.Parent = frame
-
-    local lbl = Instance.new("TextLabel")
-    lbl.Size = UDim2.new(1, -20, 0, 24); lbl.Position = UDim2.new(0, 10, 0, 5)
-    lbl.BackgroundTransparency = 1; lbl.Text = titleText; lbl.TextColor3 = Color3.fromRGB(255, 30, 50)
-    lbl.Font = Enum.Font.GothamBold; lbl.TextSize = 14; lbl.TextXAlignment = Enum.TextXAlignment.Left; lbl.Parent = frame
-
-    local layout = Instance.new("UIListLayout")
-    layout.Padding = UDim.new(0, 6); layout.SortOrder = Enum.SortOrder.LayoutOrder; layout.Parent = frame
-    
-    local pad = Instance.new("UIPadding")
-    pad.PaddingTop = UDim.new(0, 35); pad.PaddingLeft = UDim.new(0, 10); pad.PaddingRight = UDim.new(0, 10); pad.Parent = frame
-    return frame
-end
-
--- Função Toggle (Visual da Foto)
-local function CreateToggle(parent, text, initial, order, callback)
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(1, 0, 0, 28); btn.BackgroundColor3 = Color3.fromRGB(15, 15, 18)
-    btn.BorderSizePixel = 0; btn.Text = ""; btn.LayoutOrder = order; btn.Parent = parent
-    local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 4); c.Parent = btn
-
-    local lbl = Instance.new("TextLabel")
-    lbl.Size = UDim2.new(1, -50, 1, 0); lbl.Position = UDim2.new(0, 8, 0, 0)
-    lbl.BackgroundTransparency = 1; lbl.Text = text; lbl.TextColor3 = Color3.fromRGB(200, 200, 200)
-    lbl.TextSize = 12; lbl.Font = Enum.Font.Gotham; lbl.TextXAlignment = Enum.TextXAlignment.Left; lbl.Parent = btn
-
-    local sw = Instance.new("Frame")
-    sw.Size = UDim2.new(0, 32, 0, 18); sw.Position = UDim2.new(1, -40, 0.5, -9)
-    sw.BackgroundColor3 = initial and Color3.fromRGB(255, 30, 50) or Color3.fromRGB(50, 50, 55); sw.Parent = btn
-    local swc = Instance.new("UICorner"); swc.CornerRadius = UDim.new(1, 0); swc.Parent = sw
-
-    local knob = Instance.new("Frame")
-    knob.Size = UDim2.new(0, 14, 0, 14); knob.Position = initial and UDim2.new(1, -16, 0.5, -7) or UDim2.new(0, 2, 0.5, -7)
-    knob.BackgroundColor3 = Color3.fromRGB(255, 255, 255); knob.Parent = sw
-    local kc = Instance.new("UICorner"); kc.CornerRadius = UDim.new(1, 0); kc.Parent = knob
-
-    local state = initial
-    btn.MouseButton1Click:Connect(function()
-        state = not state
-        sw.BackgroundColor3 = state and Color3.fromRGB(255, 30, 50) or Color3.fromRGB(50, 50, 55)
-        knob.Position = state and UDim2.new(1, -16, 0.5, -7) or UDim2.new(0, 2, 0.5, -7)
-        if callback then callback(state) end
-    end)
-end
-
--- ============================================================
--- PREENCHENDO A ABA AIMBOT
--- ============================================================
-local secAim = CreateSection(PageAimbot, "Aimbot", 1)
-CreateToggle(secAim, "Aimbot (Ativar)", false, 1, function(v) print("Aimbot: " .. tostring(v)) end)
-CreateToggle(secAim, "Visible Check", true, 2, function(v) end)
-CreateToggle(secAim, "Team Check", false, 3, function(v) end)
-
-local secAimConfig = CreateSection(PageAimbot, "Configurações de Mira", 2)
-CreateToggle(secAimConfig, "FOV 120", true, 1, function(v) end)
-CreateToggle(secAimConfig, "Smoothness 5", true, 2, function(v) end)
-CreateToggle(secAimConfig, "Radius 300", true, 3, function(v) end)
-
--- ============================================================
--- PREENCHENDO A ABA ESP
--- ============================================================
-local secESP = CreateSection(PageESP, "Player ESP", 1)
-CreateToggle(secESP, "NameTag ESP", true, 1, function(v) end)
-CreateToggle(secESP, "Health Bar ESP", true, 2, function(v) end)
-CreateToggle(secESP, "Distance ESP", true, 3, function(v) end)
-CreateToggle(secESP, "Skeleton ESP", true, 4, function(v) end)
-CreateToggle(secESP, "Box ESP", true, 5, function(v) end)
-
-local secOther = CreateSection(PageESP, "Other ESP", 2)
-CreateToggle(secOther, "Dropped Items", true, 1, function(v) end)
-CreateToggle(secOther, "Corpse", true, 2, function(v) end)
-CreateToggle(secOther, "Container", true, 3, function(v) end)
-CreateToggle(secOther, "Vehicle", true, 4, function(v) end)
-
-local secNPC = CreateSection(PageESP, "NPC ESP", 3)
-CreateToggle(secNPC, "Dozer ESP", true, 1, function(v) end)
-CreateToggle(secNPC, "Whisper ESP", true, 2, function(v) end)
-CreateToggle(secNPC, "Helicopter ESP", true, 3, function(v) end)
-
--- ============================================================
--- PREENCHENDO A ABA SETTINGS
--- ============================================================
-local secSettings = CreateSection(PageSettings, "Settings", 1)
-CreateToggle(secSettings, "FOV Transparency", true, 1, function(v) end)
-CreateToggle(secSettings, "ESP Text Size", true, 2, function(v) end)
-CreateToggle(secSettings, "UI Scale", true, 3, function(v) end)
-CreateToggle(secSettings, "Show FPS", false, 4, function(v) end)
-CreateToggle(secSettings, "Crosshair", false, 5, function(v) end)
-
--- Inicia na aba Aimbot
-TabAimbot.MouseButton1Click:Fire()
-
--- ============================================================
--- ATALHOS E BOTÃO MOBILE
--- ============================================================
+-- Botão Mobile / Floating
 local FloatingBtn = Instance.new("TextButton")
 FloatingBtn.Size = UDim2.new(0, 50, 0, 50); FloatingBtn.Position = UDim2.new(1, -70, 0.5, -25)
 FloatingBtn.BackgroundColor3 = Color3.fromRGB(15, 10, 12); FloatingBtn.Text = "DEMON"
